@@ -1,4 +1,4 @@
-railstables
+rails-tables
 ===========
 
-A clean jQuery datatables API
+A clean jQuery datatables DSL
