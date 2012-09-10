@@ -1,68 +1,56 @@
 class Search
-
-  attr_accessor :name, :table, :column_name, :search_with
+  cattr_accessor :strategies
+  self.strategies = {
+    contains_strategy: {
+      type: :string,
+      match_with: '%%%s%%'
+    },
+    starts_with_strategy: {
+      type: :string,
+      match_with: '%s%%'
+    },
+    ends_with_strategy: {
+      type: :string,
+      match_with: '%%%s'
+    }
+  }
+  attr_accessor :name, :table, :column_name, :search_with, :match_any, :split_terms
   def initialize(name, table, *args)
     self.name = name
     self.table = table
 
     attributes = args.pop || {}
     self.column_name = attributes.fetch(:column_name, name)
-    self.search_with = attributes.fetch(:strategy, :default_strategy)
+    self.search_with = attributes.fetch(:search_with, :contains_strategy)
+    self.match_any = attributes.fetch(:match_any, true)
+    self.split_terms = attributes.fetch(:split_terms, true)
 
     
-    define_singleton_method :search do |objects, terms|
+    define_singleton_method :search do
       if self.search_with.kind_of? Symbol
-        self.send(self.search_with, self.column_name, objects, terms)
+        strategy_builder(self.search_with, self.match_any, self.split_terms)
       else
-        self.search_with.call(self.column_name, objects, terms)
+        self.search_with(self.match_any, self.split_terms)
       end
     end
   end
 
-  def default_strategy(field, objects, terms)
-    self.starts_with_strategy(field, objects, terms)
-  end
-  def starts_with_strategy(field, objects, terms)
-    terms.split.map{|s| s+="%"}.map do |term|
-      Squeel::Nodes::Predicate.new(Squeel::Nodes::Stub.new(field), :matches, term)
-    end.inject do |t, expr|
-      t | expr
-    end.tap do |block|
-      return objects.where{block}
+  def strategy_builder(strategy_name, match_any, split_terms)
+    Proc.new do |field, terms|
+      if split_terms
+        terms = terms.split
+      else
+        terms = [terms]
+      end
+      terms.map{|s| Search.strategies[strategy_name][:match_with] % s}.map do |term|
+        Squeel::Nodes::Predicate.new(Squeel::Nodes::Stub.new(field), :matches, term)
+      end.inject do |t, expr|
+        if match_any
+          t | expr
+        else
+          t & expr
+        end
+      end
     end
   end
-  def contains_strategy(field, objects, terms)
-    terms.split.map{|s| s="%#{s}%"}.map do |term|
-      Squeel::Nodes::Predicate.new(Squeel::Nodes::Stub.new(field), :matches, term)
-    end.inject do |t, expr|
-      t | expr
-    end.tap do |block|
-      return objects.where{block}
-    end
-  end
-  # def self_referential_link(view, object)
-  #   property = object.send(self.column_name)
-  #   view.link_to property, object if not property.nil?
-  # end
-  # def related_link(view, object)
-  #   property = object.send(self.column_name)
-  #   view.link_to self.name, property if not property.nil?
-  # end
-  # def related_link_list(view, object)
-  #   property = object.send(self.referring_column_name)
-  #   property.collect { |related_object| self_referential_link(view, related_object) }.join(', ') if not property.nil?
-  # end
-  # def time(view, object)
-  #   property = object.send(self.column_name)
-  #   property.strftime("%I:%M%p") if not property.nil?
-  # end
-  # def date(view, object)
-  #   property = object.send(self.column_name)
-  #   property.strftime("%m/%d/%Y") if not property.nil?
-  # end
-  # def datetime(view, object)
-  #   property = object.send(self.column_name)
-  #   property.strftime("%m/%d/%Y at %I:%M%p") if not property.nil?
-  # end
-
 end

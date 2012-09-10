@@ -24,7 +24,7 @@ attr_accessor :view, :filters
     }
   end
 
-cattr_accessor :columns, :searches
+class_attribute :columns, :searches, :match_any
   def self.column(name, *args)
     arguments = args.pop || {}
     self.columns = [] if self.columns.nil?
@@ -34,6 +34,10 @@ cattr_accessor :columns, :searches
     arguments = args.pop || {}
     self.searches = [] if self.searches.nil?
     self.searches << Search.new(name, self, arguments)
+  end
+  self.match_any = true
+  def self.match_any_column(match_any=true)
+    self.match_any = match_any
   end
 
 private
