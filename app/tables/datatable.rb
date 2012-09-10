@@ -49,7 +49,7 @@ private
       objects = self.model
     end
     @filters.each do |method, arguments|
-      objects = objects.send(method, arguments)
+      objects = objects.send(method, *arguments)
     end
     if params[:sSearch].present?
       objects = objects.send("#{self.name}_search", params[:sSearch])
