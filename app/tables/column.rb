@@ -31,11 +31,11 @@ class Column
   end
   def related_link(view, object)
     property = object.send(self.column_name)
-    view.link_to self.name, property if not property.nil?
+    view.link_to property, property if not property.nil?
   end
   def related_link_list(view, object)
     property = object.send(self.referring_column_name)
-    property.collect { |related_object| self_referential_link(view, related_object) }.join(', ') if not property.nil?
+    property.collect { |related_object| related_link(view, related_object) }.join(', ') if not property.nil?
   end
   def time(view, object)
     property = object.send(self.column_name)

@@ -7,11 +7,11 @@ attr_accessor :name, :model
     self.model = model
   end
 
-attr_accessor :view, :filters
+attr_accessor :view, :scopes
   def render_with(view, *args)
     arguments = args.pop || {}
     self.view = view
-    self.filters = arguments.fetch(:filters, {})
+    self.scopes = arguments.fetch(:scopes, {})
     return self
   end
 
@@ -24,7 +24,7 @@ attr_accessor :view, :filters
     }
   end
 
-class_attribute :columns, :searches, :match_any
+class_attribute :columns, :searches, :authorized_scopes, :match_any
   def self.column(name, *args)
     arguments = args.pop || {}
     self.columns = [] if self.columns.nil?
@@ -35,8 +35,12 @@ class_attribute :columns, :searches, :match_any
     self.searches = [] if self.searches.nil?
     self.searches << Search.new(name, self, arguments)
   end
-  self.match_any = true
+  def self.available_scopes(*args)
+    self.authorized_scopes = [] if self.authorized_scopes.nil?
+    self.authorized_scopes += args
+  end
   def self.match_any_column(match_any=true)
+    self.match_any = true if self.match_any.nil?
     self.match_any = match_any
   end
 
@@ -48,12 +52,11 @@ private
     else
       objects = self.model
     end
-    @filters.each do |method, arguments|
-      objects = objects.send(method, *arguments)
+    self.scopes.each do |method, arguments|
+      objects = objects.send(method, *arguments) if self.authorized_scopes.include?(method.to_sym)
     end
     if params[:sSearch].present?
       objects = objects.send("#{self.name}_search", params[:sSearch])
-      #objects = objects.where("name like :search or category like :search", search: "%#{params[:sSearch]}%")
     end
     objects = objects.paginate(page: page, per_page: per_page)
     objects
