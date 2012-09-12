@@ -39,9 +39,9 @@ class_attribute :columns, :searches, :authorized_scopes, :match_any
     self.authorized_scopes = [] if self.authorized_scopes.nil?
     self.authorized_scopes += args
   end
-  def self.match_any_column(match_any=true)
-    self.match_any = true if self.match_any.nil?
-    self.match_any = match_any
+  self.match_any = true
+  def self.match_all_columns
+    self.match_any = false
   end
 
 private
