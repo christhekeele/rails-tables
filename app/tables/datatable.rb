@@ -11,7 +11,7 @@ attr_accessor :view, :scopes
   def render_with(view, *args)
     arguments = args.pop || {}
     self.view = view
-    self.scopes = arguments.fetch(:scopes, {})
+    self.scopes = arguments.fetch(:scopes, [])
     return self
   end
 
@@ -35,10 +35,6 @@ class_attribute :columns, :searches, :authorized_scopes, :match_any
     self.searches = [] if self.searches.nil?
     self.searches << Search.new(name, self, arguments)
   end
-  def self.available_scopes(*args)
-    self.authorized_scopes = [] if self.authorized_scopes.nil?
-    self.authorized_scopes += args
-  end
   self.match_any = true
   def self.match_all_columns
     self.match_any = false
@@ -52,8 +48,8 @@ private
     else
       objects = self.model
     end
-    self.scopes.each do |method, arguments|
-      objects = objects.send(method, *arguments) if self.authorized_scopes.include?(method.to_sym)
+    self.scopes.each do |scope|
+      objects = scope.call(objects)
     end
     if params[:sSearch].present?
       objects = objects.send("#{self.name}_search", params[:sSearch])
