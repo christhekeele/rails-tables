@@ -11,7 +11,7 @@ attr_accessor :view, :scopes
   def render_with(view, *args)
     arguments = args.pop || {}
     self.view = view
-    self.scopes = arguments.fetch(:scopes, [])
+    self.scopes = Array(arguments.fetch(:scopes, []))
     return self
   end
 
