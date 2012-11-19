@@ -7,6 +7,36 @@ attr_accessor :name, :model
     self.model = model
   end
 
+class_attribute :source
+  def self.source_path=(source)
+    self.source = Rails.application.routes.url_helpers.send(source, format: "json")
+  end
+
+class_attribute :defaults
+self.defaults = {
+  initial_orderings: {},
+}
+  def self.initial_ordering(orderings)
+    self.initial_orderings orderings
+  end
+  def self.initial_orderings(orderings)
+    self.defaults[:initial_orderings].merge! orderings
+  end
+
+  def html_data
+    options = {}
+    if self.class.source?
+      options[:source] = self.class.source
+    end
+    if self.defaults.has_key? :initial_orderings
+      self.class.defaults[:initial_orderings].each do |column, order|
+        options["#{column}_ordering"] = order.to_s
+      end
+    end
+    options[:unsorted] = 'true'
+    options
+  end
+
 attr_accessor :view, :scopes
   def render_with(view, *args)
     arguments = args.pop || {}
@@ -72,13 +102,13 @@ private
   end
   
   def sortable
-    self.columns.map{ |column| column.sortable }[params[:iSortCol_0].to_i]
+    self.columns.map{ |column| column.sortable }[params[:iSortCol_0].to_i] unless params[:bUseDefaultSort] == 'true'
   end
   def sort_column
     self.columns.map(&:column_name)[params[:iSortCol_0].to_i]
   end
   def sort_direction
-    params[:sSortDir_0] == "desc" ? "desc" : "asc"
+    params[:sSortDir_0] == "asc" ? "asc" : "desc"
   end
 
   def data
