@@ -116,9 +116,10 @@ A clean jQuery datatables DSL
       # instead of relying on User.datatable.html_data.
       self.source_path = :users_path
 
-      # If not specified here, datatables will order :asc on the first column, no matter how your dataset orders itself initially.
-      # Setting this injects extra data attributes on page through User.datatable.html_data that override datatables behaviour,
-      # through the aoColumnDefs and fnServerParams javascripts.
+      # If not specified here, datatables will order :asc on the first column,
+      # no matter how your dataset orders itself initially.
+      # Setting this injects extra data attributes on pagethrough User.datatable.html_data that
+      # override datatables behaviour, through the aoColumnDefs and fnServerParams javascripts.
       initial_ordering :username => :desc
 
 
@@ -160,7 +161,8 @@ A clean jQuery datatables DSL
       # :render_with also accepts lambdas for custom results.
       # Each lambda recieves the view context and the object being placed on the table.
       # Whatever it returns is what gets placed on the column
-      # This allows for great customization, styling, visual rendering, complicated logic, and columns that have nothing to do with the database.
+      # This allows for great customization, styling, visual rendering, complicated logic,
+      # and columns that have nothing to do with the database.
       # If your column does not exist in the database, you need to mark it as not sortable or rails-tables will break.
       # You are responsible for marking the output of the lambda as .html_safe.
 
