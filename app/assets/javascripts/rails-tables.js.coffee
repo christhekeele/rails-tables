@@ -1,8 +1,8 @@
 $ ->
   $('table.datatable').bind 'sort', ->
-    $(@).closest('table.datatable').data('unsorted', false)
+    $(@).data('unsorted', false)
   $('table.datatable').one 'sort', ->
-    $(@).closest('table.datatable').data('unsorted', true)
+    $(@).data('unsorted', true)
 
 @rails_tables = {}
 @rails_tables.columns = ->
