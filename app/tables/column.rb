@@ -5,8 +5,8 @@ class Column
     self.name = name
 
     attributes = args.pop || {}
-    self.method = attributes.fetch(:method, name)
-    self.relation_chain = attributes.fetch(:relation_chain, [])
+    self.column_name = attributes.fetch(:column_name, name)
+    self.referring_column_name = attributes.fetch(:referring_column_name, nil)
     self.render_with = attributes.fetch(:render_with, :default_render)
     self.sortable = attributes.fetch(:sortable, true)
     self.blank_value = attributes.fetch(:blank_value, '&ndash;')
@@ -25,7 +25,8 @@ class Column
     self.relation_chain.each do |relation|
       object = object.send(relation)
     end
-    
+  end
+
 
   def default_render(view, object)
     property = object.send(self.column_name)

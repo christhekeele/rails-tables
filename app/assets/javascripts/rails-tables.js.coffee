@@ -1,8 +1,8 @@
 $ ->
-  $('table.datatable th.th-sortable.sorting').unbind 'click'
-  $('table.datatable th.sorting').click ->
-    console.log "EVENT"
+  $('table.datatable').bind 'sort', ->
     $(@).closest('table.datatable').data('unsorted', false)
+  $('table.datatable').one 'sort', ->
+    $(@).closest('table.datatable').data('unsorted', true)
 
 @rails_tables = {}
 @rails_tables.columns = ->
