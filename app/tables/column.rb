@@ -1,17 +1,22 @@
 class Column
 
-  attr_accessor :name, :column_name, :referring_column_name, :render_with, :sortable, :blank_value
-  def initialize(name, *args)
+  attr_accessor :model, :name, :method, :relation_chain, :render_with, :sortable, :blank_value
+  def initialize(model, name, *args)
+    self.model = model
     self.name = name
 
     attributes = args.pop || {}
-    self.column_name = attributes.fetch(:column_name, name)
-    self.referring_column_name = attributes.fetch(:referring_column_name, nil)
+    self.method = attributes.fetch(:method, name)
+    self.relation_chain = attributes.fetch(:relation_chain, [])
+    self.relation_chain = [self.relation_chain] unless self.relation_chain.is_a? Array
     self.render_with = attributes.fetch(:render_with, :default_render)
     self.sortable = attributes.fetch(:sortable, true)
     self.blank_value = attributes.fetch(:blank_value, '&ndash;')
 
     define_singleton_method :render do |view, object|
+      self.relation_chain.each do |relation|
+        object = object.try(:send, relation)
+      end
       if self.render_with.kind_of? Symbol
         content = self.send(self.render_with, view, object)
       else
@@ -21,39 +26,40 @@ class Column
     end
   end
 
-  def render(object)
-    self.relation_chain.each do |relation|
-      object = object.send(relation)
-    end
+  def column_source
+    model = self.model
+    source_path = self.relation_chain.map do |relation|
+      model = model.reflect_on_association(relation).klass
+      model.table_name
+    end << self.method
+    source_path.join('.')
   end
 
-
   def default_render(view, object)
-    property = object.send(self.column_name)
+    property = object.try(:send, self.method)
     property if not property.nil?
   end
   def self_referential_link(view, object)
-    property = object.send(self.column_name)
+    property = object.try(:send, self.method)
     view.link_to property, object if not property.nil?
   end
   def related_link(view, object)
-    property = object.send(self.column_name)
+    property = object.try(:send, self.method)
     view.link_to property, property if not property.nil?
   end
-  def related_link_list(view, object)
-    property = object.send(self.referring_column_name)
-    property.collect { |related_object| related_link(view, related_object) }.join(', ') if not property.nil?
+  def related_link_list(view, objects)
+    objects.map{ |object| related_link(view, object) }.reject(&:nil?).join(', ') if not objects.nil?
   end
   def time(view, object)
-    property = object.send(self.column_name)
+    property = object.try(:send, self.method)
     property.strftime("%I:%M%p") if not property.nil?
   end
   def date(view, object)
-    property = object.send(self.column_name)
+    property = object.try(:send, self.method)
     property.strftime("%m/%d/%Y") if not property.nil?
   end
   def datetime(view, object)
-    property = object.send(self.column_name)
+    property = object.try(:send, self.method)
     property.strftime("%m/%d/%Y at %I:%M%p") if not property.nil?
   end
 

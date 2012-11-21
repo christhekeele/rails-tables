@@ -12,15 +12,13 @@ class_attribute :source
     self.source = Rails.application.routes.url_helpers.send(source, format: "json")
   end
 
-class_attribute :defaults
-self.defaults = {
-  initial_orderings: {},
-}
+class_attribute :initial_orderings
   def self.initial_ordering(orderings)
-    self.initial_orderings orderings
+    self.set_initial_orderings orderings
   end
-  def self.initial_orderings(orderings)
-    self.defaults[:initial_orderings].merge! orderings
+  def self.set_initial_orderings(orderings)
+    self.initial_orderings = {} if self.initial_orderings.nil?
+    self.initial_orderings.merge! orderings
   end
 
   def html_data
@@ -28,8 +26,8 @@ self.defaults = {
     if self.class.source?
       options[:source] = self.class.source
     end
-    if self.defaults.has_key? :initial_orderings
-      self.class.defaults[:initial_orderings].each do |column, order|
+    unless self.initial_orderings.nil?
+      self.class.initial_orderings.each do |column, order|
         options["#{column}_ordering"] = order.to_s
       end
     end
@@ -54,12 +52,16 @@ attr_accessor :view, :scopes
     }
   end
 
-class_attribute :columns, :searches, :authorized_scopes, :match_any
+class_attribute :columns, :column_factory, :searches, :authorized_scopes, :match_any
   def self.column(name, *args)
     arguments = args.pop || {}
-    self.columns = [] if self.columns.nil?
-    self.columns << Column.new(name, arguments)
+    self.column_factory = [] if self.column_factory.nil?
+    self.column_factory << [name, arguments]
   end
+  def columns
+    @columns ||= self.column_factory.map{ |new_column| Column.new(self.model, new_column[0], new_column[1]) }
+  end
+
   def self.search_by(name, *args)
     arguments = args.pop || {}
     self.searches = [] if self.searches.nil?
@@ -70,13 +72,20 @@ class_attribute :columns, :searches, :authorized_scopes, :match_any
     self.match_any = false
   end
 
+attr_accessor :joins
+  def joins
+    @joins ||= self.columns.map(&:relation_chain).uniq.reject(&:blank?)
+  end
+
 private
 
   def objects
+    objects = self.model
+    self.joins.each do |join|
+      objects = objects.uniq.includes{ join.map(&:to_s).inject((strs.present? ? self : nil), :__send__).outer }
+    end
     if sortable
-      objects = self.model.reorder("#{sort_column} #{sort_direction}")
-    else
-      objects = self.model
+      objects = objects.reorder("#{sort_column} #{sort_direction}")
     end
     self.scopes.each do |scope|
       objects = scope.call(objects)
@@ -85,7 +94,6 @@ private
       objects = objects.send("#{self.name}_search", params[:sSearch])
     end
     objects = objects.paginate(page: page, per_page: per_page)
-    objects
   end
 
   def search(objects, terms)
@@ -105,7 +113,7 @@ private
     self.columns.map{ |column| column.sortable }[params[:iSortCol_0].to_i] unless params[:bUseDefaultSort] == 'true'
   end
   def sort_column
-    self.columns.map(&:column_name)[params[:iSortCol_0].to_i]
+    self.columns.map(&:column_source)[params[:iSortCol_0].to_i]
   end
   def sort_direction
     params[:sSortDir_0] == "asc" ? "asc" : "desc"
