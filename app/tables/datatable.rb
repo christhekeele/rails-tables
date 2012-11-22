@@ -52,21 +52,17 @@ attr_accessor :view, :scopes
     }
   end
 
-class_attribute :columns, :column_factory, :searches, :authorized_scopes, :match_any
+class_attribute :columns, :column_factory
   def self.column(name, *args)
     arguments = args.pop || {}
     self.column_factory = [] if self.column_factory.nil?
-    self.column_factory << [name, arguments]
+    self.column_factory << { name: name, args: arguments }
   end
   def columns
-    @columns ||= self.column_factory.map{ |new_column| Column.new(self.model, new_column[0], new_column[1]) }
+    @columns ||= self.column_factory.map{ |new_column| Column.new(self.model, new_column[:name], new_column[:args]) }
   end
 
-  def self.search_by(name, *args)
-    arguments = args.pop || {}
-    self.searches = [] if self.searches.nil?
-    self.searches << Search.new(name, self, arguments)
-  end
+class_attribute :match_any
   self.match_any = true
   def self.match_all_columns
     self.match_any = false
@@ -91,17 +87,16 @@ private
       objects = scope.call(objects)
     end
     if params[:sSearch].present?
-      objects = objects.send("#{self.name}_search", params[:sSearch])
+      objects = objects.search(params[:sSearch])
     end
     objects = objects.paginate(page: page, per_page: per_page)
   end
 
-  def search(objects, terms)
-    self.searches.each do |search|
-      objects = search.search(objects, terms)
+  def search(terms)
+    self.columns.select(&:searchable).map(&:column_source).each do |field|
     end
   end
-  
+
   def page
     params[:iDisplayStart].to_i/per_page + 1
   end
