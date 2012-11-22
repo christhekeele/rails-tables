@@ -1,6 +1,6 @@
 class Column
 
-  attr_accessor :model, :name, :method, :relation_chain, :render_with, :sortable, :blank_value
+  attr_accessor :model, :name, :method, :relation_chain, :render_with, :sortable, :searchable, :blank_value
   def initialize(model, name, *args)
     self.model = model
     self.name = name
@@ -11,6 +11,7 @@ class Column
     self.relation_chain = [self.relation_chain] unless self.relation_chain.is_a? Array
     self.render_with = attributes.fetch(:render_with, :default_render)
     self.sortable = attributes.fetch(:sortable, true)
+    self.searchable = attributes.fetch(:searchable, true)
     self.blank_value = attributes.fetch(:blank_value, '&ndash;')
 
     define_singleton_method :render do |view, object|
