@@ -94,6 +94,22 @@ private
 
   def search(terms)
     self.columns.select(&:searchable).map(&:column_source).each do |field|
+      Proc.new do |field, terms|
+        if self.class.split_search_terms
+          terms = terms.split
+        else
+          terms = [terms]
+        end
+        terms.map{|s| '%%%s%%' % s}.map do |term|
+          Squeel::Nodes::Predicate.new(Squeel::Nodes::Stub.new(field), :matches, term)
+        end.inject do |t, expr|
+          if self.class.match_any
+            t | expr
+          else
+            t & expr
+          end
+        end
+      end
     end
   end
 
