@@ -76,42 +76,49 @@ attr_accessor :joins
 private
 
   def objects
-    objects = self.model
+    query = self.model
     self.joins.each do |join|
-      objects = objects.uniq.includes{ join.map(&:to_s).inject((strs.present? ? self : nil), :__send__).outer }
+      query = query.uniq.includes{ join.map(&:to_s).inject((strs.present? ? self : nil), :__send__).outer }
     end
     if sortable
-      objects = objects.reorder("#{sort_column} #{sort_direction}")
+      query = query.reorder("#{sort_column} #{sort_direction}")
     end
     self.scopes.each do |scope|
-      objects = scope.call(objects)
+      query = scope.call(query)
     end
     if params[:sSearch].present?
-      objects = objects.search(params[:sSearch])
+      query = query.where{
+        self.columns.select(&:searchable).map(&:column_source).map do |column|
+          params[:sSearch].split.map do |word|
+            Squeel::Nodes::Predicate.new(Squeel::Nodes::Stub.new(column), :matches, '%%%s%%' % word)
+          end.compact.inject(&:|)
+        end.compact.inject(&:|)
+      }
     end
-    objects = objects.paginate(page: page, per_page: per_page)
+    binding.pry
+    query = query.paginate(page: page, per_page: per_page)
   end
 
-  def search(terms)
-    self.columns.select(&:searchable).map(&:column_source).each do |field|
-      Proc.new do |field, terms|
-        if self.class.split_search_terms
-          terms = terms.split
-        else
-          terms = [terms]
-        end
-        terms.map{|s| '%%%s%%' % s}.map do |term|
-          Squeel::Nodes::Predicate.new(Squeel::Nodes::Stub.new(field), :matches, term)
-        end.inject do |t, expr|
-          if self.class.match_any
-            t | expr
-          else
-            t & expr
-          end
-        end
-      end
-    end
-  end
+  # def search(terms)
+  #   self.columns.select(&:searchable).map(&:column_source).each do |field|
+  #     Proc.new do |field, terms|
+  #       if self.class.split_search_terms
+  #         terms = terms.split
+  #       else
+  #         terms = [terms]
+  #       end
+  #       terms.map{|s| '%%%s%%' % s}.map do |term|
+  #         Squeel::Nodes::Predicate.new(Squeel::Nodes::Stub.new(field), :matches, term)
+  #       end.inject do |t, expr|
+  #         if self.class.match_any
+  #           t | expr
+  #         else
+  #           t & expr
+  #         end
+  #       end
+  #     end
+  #   end
+  # end
 
   def page
     params[:iDisplayStart].to_i/per_page + 1
