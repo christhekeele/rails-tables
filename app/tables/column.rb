@@ -3,10 +3,10 @@ class Column
   attr_accessor :model, :name, :method, :column_source, :render_with, :sortable, :searchable, :blank_value
   def initialize(model, name, *args)
     self.model = model
-    self.name = name
+    self.name = name.to_s
 
     attributes = args.pop || {}
-    self.method = attributes.fetch(:method, name)
+    self.method = attributes.fetch(:method, name).to_s
     self.column_source = attributes.fetch(:column_source, '').to_s
     self.render_with = attributes.fetch(:render_with, :default_render)
     self.sortable = attributes.fetch(:sortable, true)
