@@ -62,9 +62,14 @@ class_attribute :columns, :column_factory
     @columns ||= self.column_factory.map{ |new_column| Column.new(self.model, new_column[:name], new_column[:args]) }
   end
 
+class_attribute :joins
+self.joins = []
+  def self.join(join)
+    self.joins += [join.to_s]
+  end
 attr_accessor :joins
   def joins
-    @joins ||= self.columns.map(&:column_source).reject(&:blank?).uniq
+    @joins ||= (self.columns.map(&:column_source).reject(&:blank?) + self.class.joins).uniq 
   end
 attr_accessor :searches
   def searches
@@ -76,7 +81,8 @@ private
   def objects
     query = self.model.uniq
     self.joins.each do |join|
-      query = query.joins{ join.split('.').inject(self, :__send__).outer }.includes{ join.split('.').inject(self, :__send__).outer }
+      query = query.joins{ join.split('.').inject(self, :__send__).outer }
+      query = query.includes{ join.split('.').inject(self, :__send__).outer }
     end
     if sortable
       sort_expression = sort

@@ -14,11 +14,12 @@ class Column
     self.blank_value = attributes.fetch(:blank_value, '&ndash;')
 
     define_singleton_method :render do |view, object|
+      related = object
       self.column_source.split('.').each do |relation|
-        object = object.try(:send, relation)
+        related = related.try(:send, relation)
       end
       if self.render_with.kind_of? Symbol
-        content = self.send(self.render_with, view, object)
+        content = self.send(self.render_with, view, related)
       else
         content = self.render_with.call(view, object)
       end
@@ -39,8 +40,12 @@ class Column
     view.link_to property, property if not property.nil?
   end
   def related_link_list(view, objects)
-    objects.map{ |object| related_link(view, object).strip }.reject(&:blank?).join(', ') if not objects.nil?
+    objects.reject(&:blank?).map{ |object| related_link(view, object).strip }.join(', ') if not objects.nil?
   end
+  # def unique_related_link_list(view, objects, field)
+  #   binding.pry if objects.length > 1
+  #   related_link_list(view, objects.uniq{|o| o.send(field)} )
+  # end
   def time(view, object)
     property = object.try(:send, self.method)
     property.strftime("%I:%M%p") if not property.nil?
