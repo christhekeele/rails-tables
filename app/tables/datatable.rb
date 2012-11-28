@@ -62,15 +62,9 @@ class_attribute :columns, :column_factory
     @columns ||= self.column_factory.map{ |new_column| Column.new(self.model, new_column[:name], new_column[:args]) }
   end
 
-class_attribute :match_any
-  self.match_any = true
-  def self.match_all_columns
-    self.match_any = false
-  end
-
 attr_accessor :joins
   def joins
-    @joins ||= self.columns.map(&:column_source).uniq.reject(&:blank?)
+    @joins ||= self.columns.map(&:column_source).reject(&:blank?).uniq
   end
 attr_accessor :searches
   def searches
@@ -80,13 +74,13 @@ attr_accessor :searches
 private
 
   def objects
-    query = self.model
+    query = self.model.uniq
     self.joins.each do |join|
-      query = query.uniq.includes{ join.split('.').inject((strs.present? ? self : nil), :__send__).outer }
+      query = query.joins{ join.split('.').inject(self, :__send__).outer }.includes{ join.split('.').inject(self, :__send__).outer }
     end
     if sortable
       sort_expression = sort
-      query = query.reorder{ my{sort_expression} }#("#{sort_column} #{sort_direction}")
+      query = query.reorder{ my{sort_expression} }
     end
     self.scopes.each do |scope|
       query = scope.call(query)

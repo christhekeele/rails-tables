@@ -7,7 +7,7 @@ class Column
 
     attributes = args.pop || {}
     self.method = attributes.fetch(:method, name)
-    self.column_source = attributes.fetch(:column_source, '')
+    self.column_source = attributes.fetch(:column_source, '').to_s
     self.render_with = attributes.fetch(:render_with, :default_render)
     self.sortable = attributes.fetch(:sortable, true)
     self.searchable = attributes.fetch(:searchable, true)
@@ -39,7 +39,7 @@ class Column
     view.link_to property, property if not property.nil?
   end
   def related_link_list(view, objects)
-    objects.map{ |object| related_link(view, object) }.reject(&:nil?).join(', ') if not objects.nil?
+    objects.map{ |object| related_link(view, object).strip }.reject(&:blank?).join(', ') if not objects.nil?
   end
   def time(view, object)
     property = object.try(:send, self.method)
