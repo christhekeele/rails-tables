@@ -12,6 +12,8 @@ A clean jQuery datatables DSL
 [jqd-railscast]: http://railscasts.com/episodes/340-datatables (Episode #340: Datatables)
 [squeel]: https://github.com/ernie/squeel (Squeel: ActiveRecord 3, improved)
 
+Version: 0.4.2
+
 Please refer to the [RailsTables Wiki][wiki] for:
 
 - [Installation][wiki-installation]

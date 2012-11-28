@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.summary     = "A clean jQuery datatables DSL."
   s.description = "RailsTables is a simple DSL built on top of jquery-datatables-rails to quickly compose performant jQuery datatables for your Rails app."
 
-  s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.rdoc"]
+  s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.md"]
   
   s.add_dependency "rails", "~> 3.2.7"
   s.add_dependency "railties", "~> 3.1"
