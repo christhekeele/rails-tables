@@ -70,7 +70,11 @@ class_attribute :match_any
 
 attr_accessor :joins
   def joins
-    @joins ||= self.columns.map(&:relation_chain).uniq.reject(&:blank?)
+    @joins ||= self.columns.map(&:column_source).uniq.reject(&:blank?)
+  end
+attr_accessor :searches
+  def searches
+    @searches ||= self.columns.select(&:searchable).select{|c| c.column_source.present?}
   end
 
 private
@@ -78,63 +82,45 @@ private
   def objects
     query = self.model
     self.joins.each do |join|
-      query = query.uniq.includes{ join.map(&:to_s).inject((strs.present? ? self : nil), :__send__).outer }
+      query = query.uniq.includes{ join.split('.').inject((strs.present? ? self : nil), :__send__).outer }
     end
     if sortable
-      query = query.reorder("#{sort_column} #{sort_direction}")
+      sort_expression = sort
+      query = query.reorder{ my{sort_expression} }#("#{sort_column} #{sort_direction}")
     end
     self.scopes.each do |scope|
       query = scope.call(query)
     end
     if params[:sSearch].present?
-      query = query.where{
-        self.columns.select(&:searchable).map(&:column_source).map do |column|
-          params[:sSearch].split.map do |word|
-            Squeel::Nodes::Predicate.new(Squeel::Nodes::Stub.new(column), :matches, '%%%s%%' % word)
-          end.compact.inject(&:|)
-        end.compact.inject(&:|)
-      }
+      search_expression = search(params[:sSearch])
+      query = query.where{ my{search_expression} }
     end
-    binding.pry
     query = query.paginate(page: page, per_page: per_page)
   end
+  
+  def sortable
+    self.columns.map{ |column| column.sortable }[params[:iSortCol_0].to_i] unless params[:bUseDefaultSort] == 'true'
+  end
+  def sort
+    column = self.columns[params[:iSortCol_0].to_i]
+    direction = params[:sSortDir_0] == "asc" ? 1 : -1
+    Squeel::Nodes::KeyPath.new(column.column_source.split('.') << Squeel::Nodes::Order.new(column.method, direction))
+  end
 
-  # def search(terms)
-  #   self.columns.select(&:searchable).map(&:column_source).each do |field|
-  #     Proc.new do |field, terms|
-  #       if self.class.split_search_terms
-  #         terms = terms.split
-  #       else
-  #         terms = [terms]
-  #       end
-  #       terms.map{|s| '%%%s%%' % s}.map do |term|
-  #         Squeel::Nodes::Predicate.new(Squeel::Nodes::Stub.new(field), :matches, term)
-  #       end.inject do |t, expr|
-  #         if self.class.match_any
-  #           t | expr
-  #         else
-  #           t & expr
-  #         end
-  #       end
-  #     end
-  #   end
-  # end
+  def search(terms)
+    terms = terms.split if terms.is_a? String
+    self.searches.map do |column|
+      terms.map do |word|
+        Squeel::Nodes::KeyPath.new(column.column_source.split('.') << Squeel::Nodes::Stub.new(column.method)) =~ "%#{word}%"
+      end.compact.inject(&:|)
+    end.compact.inject(&:|)
+  end
 
   def page
     params[:iDisplayStart].to_i/per_page + 1
   end
   def per_page
     params[:iDisplayLength].to_i > 0 ? params[:iDisplayLength].to_i : 10
-  end
-  
-  def sortable
-    self.columns.map{ |column| column.sortable }[params[:iSortCol_0].to_i] unless params[:bUseDefaultSort] == 'true'
-  end
-  def sort_column
-    self.columns.map(&:column_source)[params[:iSortCol_0].to_i]
-  end
-  def sort_direction
-    params[:sSortDir_0] == "asc" ? "asc" : "desc"
   end
 
   def data

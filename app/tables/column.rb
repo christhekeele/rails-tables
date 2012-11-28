@@ -1,21 +1,20 @@
 class Column
 
-  attr_accessor :model, :name, :method, :relation_chain, :render_with, :sortable, :searchable, :blank_value
+  attr_accessor :model, :name, :method, :column_source, :render_with, :sortable, :searchable, :blank_value
   def initialize(model, name, *args)
     self.model = model
     self.name = name
 
     attributes = args.pop || {}
     self.method = attributes.fetch(:method, name)
-    self.relation_chain = attributes.fetch(:relation_chain, [])
-    self.relation_chain = [self.relation_chain] unless self.relation_chain.is_a? Array
+    self.column_source = attributes.fetch(:column_source, '')
     self.render_with = attributes.fetch(:render_with, :default_render)
     self.sortable = attributes.fetch(:sortable, true)
     self.searchable = attributes.fetch(:searchable, true)
     self.blank_value = attributes.fetch(:blank_value, '&ndash;')
 
     define_singleton_method :render do |view, object|
-      self.relation_chain.each do |relation|
+      self.column_source.split('.').each do |relation|
         object = object.try(:send, relation)
       end
       if self.render_with.kind_of? Symbol
@@ -25,15 +24,6 @@ class Column
       end
       content.present? ? content.to_s.html_safe : self.blank_value
     end
-  end
-
-  def column_source
-    model = self.model
-    source_path = self.relation_chain.map do |relation|
-      model = model.reflect_on_association(relation).klass
-      model.table_name
-    end << self.method
-    source_path.join('.')
   end
 
   def default_render(view, object)

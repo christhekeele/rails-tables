@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
   
   s.add_dependency "rails", "~> 3.2.7"
   s.add_dependency "railties", "~> 3.1"
+  s.add_runtime_dependency "activerecord"
   s.add_runtime_dependency "jquery-datatables-rails", "~> 1.11.0" 
   s.add_runtime_dependency "will_paginate", "~> 3.0.3"
   s.add_runtime_dependency "squeel", "~> 1.0.11"
