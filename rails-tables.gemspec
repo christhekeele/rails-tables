@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.email       = ["dev@chriskeele.com"]
   s.homepage    = "https://github.com/christhekeele/rails-tables"
   s.summary     = "A clean jQuery datatables DSL."
-  s.description = "A clean jQuery datatables DSL."
+  s.description = "RailsTables is a simple DSL built on top of jquery-datatables-rails to quickly compose performant jQuery datatables for your Rails app."
 
   s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.rdoc"]
   
