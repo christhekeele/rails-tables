@@ -8,7 +8,7 @@ module Datatable::Sorting
   end
 
   module ClassMethods
-
+    # Gotta set these to fight against datatables' default ordering on first column
     def initial_ordering(orderings)
       self.set_initial_orderings orderings
     end
@@ -21,13 +21,14 @@ module Datatable::Sorting
 
   module InstanceMethods
   private
+    # Check if table is sortable
     def sortable
       self.columns.map{ |column| column.sortable }[params[:iSortCol_0].to_i] unless params[:bUseDefaultSort] == 'true'
     end
+    # Find column to search by and create a Squeel Order
     def sort
       column = self.columns[params[:iSortCol_0].to_i]
       if column.sortable
-        binding.pry
         direction = params[:sSortDir_0] == "asc" ? 1 : -1
         Squeel::Nodes::KeyPath.new(column.column_source.split('.') << Squeel::Nodes::Order.new(column.method, direction))
       end

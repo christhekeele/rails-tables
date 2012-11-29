@@ -9,6 +9,7 @@ module Datatable::Searching
   end
 
   module ClassMethods
+    # Allow user defined fields to sort on in addition to introspected fields
     def search_on(column_source, methods)
       Array(methods).each do |method|
         join column_source
@@ -18,11 +19,12 @@ module Datatable::Searching
   end
 
   module InstanceMethods
-    attr_accessor :searches
   private
+    # Introspect available searches as well as user defined ones
     def searches
       @searches ||= (self.columns.select(&:searchable).select{|c| c.column_source.present?}.map{|c| {column_source: c.column_source, method: c.method} } + self.class.searches).uniq
     end
+    # Build Squeel Stubs for search
     def search(terms)
       terms = terms.split if terms.is_a? String
       self.searches.map do |search|

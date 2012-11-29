@@ -3,13 +3,15 @@ class Datatable
   include Datatable::Searching
   delegate :params, to: 'self.view'
 
-  attr_accessor :name, :model
-  attr_accessor :view, :scopes
+  attr_accessor :name, :model, :view, :scopes
+
+  # Called in has_datatable for model
   def initialize(name, model)
     self.name = name
     self.model = model
   end
 
+  # Render data attributes for table for view
   def html_data
     options = {}
     if self.class.source?
@@ -24,6 +26,7 @@ class Datatable
     options
   end
 
+  # Pass in view and scope table for controller
   def render_with(view, *args)
     arguments = args.pop || {}
     self.view = view
@@ -31,6 +34,7 @@ class Datatable
     return self
   end
 
+  # Format this table for controller's response
   def as_json(options={})
     {
       sEcho: params[:sEcho].to_i,
@@ -41,31 +45,37 @@ class Datatable
   end
 
   class_attribute :source
+  # Set source url for this table
   def self.source_path=(source)
     self.source = Rails.application.routes.url_helpers.send(source, format: "json")
   end
 
   class_attribute :columns, :column_factory
+  # Allow user defined columns, lazily instanciate later after 'self.model' is defined
   def self.column(name, *args)
     arguments = args.pop || {}
     self.column_factory = [] if self.column_factory.nil?
     self.column_factory << { name: name, args: arguments }
   end
+  # Lazily instanciates and caches columns
   def columns
     @columns ||= self.column_factory.map{ |new_column| Column.new(self.model, new_column[:name], new_column[:args]) }
   end
 
   class_attribute :joins
   self.joins = []
+  # Allow user to explicitly join tables (not sure of use case)
   def self.join(join)
     self.joins += [join.to_s]
   end
+  # Deduce joins based on columns and explicitly joined tables 
   def joins
     @joins ||= (self.columns.reject(&:virtual).map(&:column_source).reject(&:blank?) + self.class.joins).uniq 
   end
 
 private
 
+  # Compose query to fetch objects from database
   def objects
     query = self.model.uniq
     self.joins.each do |join|
@@ -86,6 +96,7 @@ private
     query = query.paginate(page: page, per_page: per_page)
   end
 
+  # Pagination doesn't merit it's own module.
   def page
     params[:iDisplayStart].to_i/per_page + 1
   end
@@ -93,6 +104,7 @@ private
     params[:iDisplayLength].to_i > 0 ? params[:iDisplayLength].to_i : 10
   end
 
+  # Generate HTML for each row
   def data
     objects.map do |object|
       self.columns.map{ |column| column.render(self.view, object) }
