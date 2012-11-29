@@ -44,10 +44,13 @@ class Datatable
     }
   end
 
-  class_attribute :source
+  class_attribute :source, :source_factory
   # Set source url for this table
   def self.source_path=(source)
-    self.source = Rails.application.routes.url_helpers.send(source, format: "json")
+    self.source_factory = source
+  end
+  def self.source
+    @source ||= Rails.application.routes.url_helpers.send(self.source_factory, format: "json")
   end
 
   class_attribute :columns, :column_factory
