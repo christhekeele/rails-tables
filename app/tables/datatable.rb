@@ -69,7 +69,8 @@ self.joins = []
   end
 attr_accessor :joins
   def joins
-    @joins ||= (self.columns.map(&:column_source).reject(&:blank?) + self.class.joins).uniq 
+    binding.pry
+    @joins ||= (self.columns.reject(&:virtual).map(&:column_source) + self.class.joins).uniq 
   end
 
 class_attribute :searches
@@ -82,8 +83,7 @@ self.searches = []
   end
 attr_accessor :searches
   def searches
-    @searches ||= (
-      self.columns.select(&:searchable).select{|c| c.column_source.present?}.map{|c| {column_source: c.column_source, method: c.method} } + self.class.searches).uniq
+    @searches ||= (self.columns.select(&:searchable).select{|c| c.column_source.present?}.map{|c| {column_source: c.column_source, method: c.method} } + self.class.searches).uniq
   end
 
 private
@@ -113,8 +113,11 @@ private
   end
   def sort
     column = self.columns[params[:iSortCol_0].to_i]
-    direction = params[:sSortDir_0] == "asc" ? 1 : -1
-    Squeel::Nodes::KeyPath.new(column.column_source.split('.') << Squeel::Nodes::Order.new(column.method, direction))
+    if column.sortable
+      binding.pry
+      direction = params[:sSortDir_0] == "asc" ? 1 : -1
+      Squeel::Nodes::KeyPath.new(column.column_source.split('.') << Squeel::Nodes::Order.new(column.method, direction))
+    end
   end
 
   def search(terms)

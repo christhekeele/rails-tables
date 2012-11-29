@@ -1,6 +1,7 @@
 class Column
 
-  attr_accessor :model, :name, :method, :column_source, :render_with, :sortable, :searchable, :blank_value
+  attr_accessor :model, :name, :method, :column_source, :render_with, :blank_value, :virtual, :sortable, :searchable
+
   def initialize(model, name, *args)
     self.model = model
     self.name = name.to_s
@@ -8,23 +9,35 @@ class Column
     attributes = args.pop || {}
     self.method = attributes.fetch(:method, name).to_s
     self.column_source = attributes.fetch(:column_source, '').to_s
+
+    # virtual = (self.column_source.blank? and not self.model.method_defined? self.method)
+    virtual = false
+    self.virtual = attributes.fetch(:virtual, virtual)
+    self.sortable = attributes.fetch(:sortable, self.virtual)
+    self.searchable = attributes.fetch(:searchable, self.virtual)
+
+    raise Exception, "Virtual columns are required to supply a render method (render_with: lambda): Column #{self.name}, Model: #{self.model.name}" if virtual and not attributes.has_key?(:render_with)
     self.render_with = attributes.fetch(:render_with, :default_render)
-    self.sortable = attributes.fetch(:sortable, true)
-    self.searchable = attributes.fetch(:searchable, true)
     self.blank_value = attributes.fetch(:blank_value, '&ndash;')
 
     define_singleton_method :render do |view, object|
-      related = object
-      self.column_source.split('.').each do |relation|
-        related = related.try(:send, relation)
-      end
       if self.render_with.kind_of? Symbol
-        content = self.send(self.render_with, view, related)
+        content = self.send(self.render_with, view, follow_source(object))
       else
         content = self.render_with.call(view, object)
       end
       content.present? ? content.to_s.html_safe : self.blank_value
     end
+  end
+
+private
+
+  def follow_source(object)
+    related = object
+    self.column_source.split('.').each do |relation|
+      related = related.try(:send, relation)
+    end
+    related
   end
 
   def default_render(view, object)
