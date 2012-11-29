@@ -10,11 +10,10 @@ class Column
     self.method = attributes.fetch(:method, name).to_s
     self.column_source = attributes.fetch(:column_source, '').to_s
 
-    # virtual = (self.column_source.blank? and not self.model.method_defined? self.method)
-    virtual = false
+    virtual = (self.column_source.blank? and not self.model.column_names.include? self.method)
     self.virtual = attributes.fetch(:virtual, virtual)
-    self.sortable = attributes.fetch(:sortable, self.virtual)
-    self.searchable = attributes.fetch(:searchable, self.virtual)
+    self.sortable = attributes.fetch(:sortable, !self.virtual)
+    self.searchable = attributes.fetch(:searchable, !self.virtual)
 
     raise Exception, "Virtual columns are required to supply a render method (render_with: lambda): Column #{self.name}, Model: #{self.model.name}" if virtual and not attributes.has_key?(:render_with)
     self.render_with = attributes.fetch(:render_with, :default_render)
