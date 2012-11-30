@@ -49,7 +49,7 @@ private
   end
   def related_link(view, object)
     property = object.try(:send, self.method)
-    view.link_to property, property if not property.nil?
+    view.link_to property, object if not property.nil?
   end
   def related_link_list(view, objects)
     objects.reject(&:blank?).map{ |object| related_link(view, object).strip }.join(', ') if not objects.nil?
