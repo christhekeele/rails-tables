@@ -5,7 +5,6 @@ module Datatable::Searching
     class_attribute :searches
     self.searches = []
     extend ClassMethods
-    include InstanceMethods
   end
 
   module ClassMethods
@@ -18,21 +17,27 @@ module Datatable::Searching
     end
   end
 
-  module InstanceMethods
-  private
-    # Introspect available searches as well as user defined ones
-    def searches
-      @searches ||= (self.columns.select(&:searchable).select{|c| c.column_source.present?}.map{|c| {column_source: c.column_source, method: c.method} } + self.class.searches).uniq
-    end
-    # Build Squeel Stubs for search
-    def search(terms)
-      terms = terms.split if terms.is_a? String
-      self.searches.map do |search|
-        terms.map do |word|
-          Squeel::Nodes::KeyPath.new(search[:column_source].split('.') << Squeel::Nodes::Stub.new(search[:method])) =~ "%#{word}%"
-        end.compact.inject(&:|)
+    attr_accessor :searches
+private
+  def searchable
+    params[:sSearch].present?
+  end
+  # Introspect available searches as well as user defined ones
+  def searchables
+    searches = self.columns.
+      select(&:searchable).
+      map{ |c| {column_source: c.column_source, method: c.method} }
+    searches += self.class.searches
+    @searches ||= searches.uniq
+  end
+  # Build Squeel Stubs for search
+  def search(terms)
+    terms = terms.split if terms.is_a? String
+    searchables.map do |search|
+      terms.map do |word|
+        Squeel::Nodes::KeyPath.new(search[:column_source].split('.') << Squeel::Nodes::Stub.new(search[:method])) =~ "%#{word}%"
       end.compact.inject(&:|)
-    end
+    end.compact.inject(&:|)
   end
 
 end

@@ -4,7 +4,6 @@ module Datatable::Sorting
   included do
     class_attribute :initial_orderings
     extend ClassMethods
-    include InstanceMethods
   end
 
   module ClassMethods
@@ -19,19 +18,17 @@ module Datatable::Sorting
 
   end
 
-  module InstanceMethods
-  private
-    # Check if table is sortable
-    def sortable
-      self.columns.map{ |column| column.sortable }[params[:iSortCol_0].to_i] unless params[:bUseDefaultSort] == 'true'
-    end
-    # Find column to search by and create a Squeel Order
-    def sort
-      column = self.columns[params[:iSortCol_0].to_i]
-      if column.sortable
-        direction = params[:sSortDir_0] == "asc" ? 1 : -1
-        Squeel::Nodes::KeyPath.new(column.column_source.split('.') << Squeel::Nodes::Order.new(column.method, direction))
-      end
+private
+  # Check if table is sortable
+  def sortable
+    self.columns.map{ |column| column.sortable }[params[:iSortCol_0].to_i] unless params[:bUseDefaultSort] == 'true'
+  end
+  # Find column to search by and create a Squeel Order
+  def sort
+    column = self.columns[params[:iSortCol_0].to_i]
+    if column.sortable
+      direction = params[:sSortDir_0] == "asc" ? 1 : -1
+      Squeel::Nodes::KeyPath.new(column.column_source.split('.') << Squeel::Nodes::Order.new(Squeel::Nodes::Stub.new(column.method), direction))
     end
   end
 

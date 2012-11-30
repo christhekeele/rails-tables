@@ -19,7 +19,7 @@ class Datatable
     end
     unless self.initial_orderings.nil?
       self.class.initial_orderings.each do |column, order|
-        options["#{column}_ordering"] = order.to_s
+        options["#{column}_ordering".to_sym] = order.to_s
       end
     end
     options[:unsorted] = 'true'
@@ -85,17 +85,11 @@ private
       query = query.joins{ join.split('.').inject((join.present? ? self : nil), :__send__).outer }
       query = query.includes{ join.split('.').inject((join.present? ? self : nil), :__send__).outer }
     end
-    if sortable
-      sort_expression = sort
-      query = query.reorder{ my{sort_expression} }
-    end
     self.scopes.each do |scope|
       query = scope.call(query)
     end
-    if params[:sSearch].present?
-      search_expression = search(params[:sSearch])
-      query = query.where{ my{search_expression} }
-    end
+    query = query.reorder{ my{sort} } if sortable
+    query = query.where{ my{search(params[:sSearch])} } if searchable
     query = query.paginate(page: page, per_page: per_page)
   end
 
