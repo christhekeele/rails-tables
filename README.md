@@ -12,7 +12,7 @@ A clean jQuery datatables DSL
 [jqd-railscast]: http://railscasts.com/episodes/340-datatables (Episode #340: Datatables)
 [squeel]: https://github.com/ernie/squeel (Squeel: ActiveRecord 3, improved)
 
-Version: 0.5.0
+Version: 0.5.1
 
 Please refer to the [RailsTables Wiki][wiki] for:
 
