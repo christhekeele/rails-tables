@@ -18,6 +18,7 @@ module Datatable::Sorting
 
   end
 
+  # InstanceMethods
 private
   # Check if table is sortable
   def sortable

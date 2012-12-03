@@ -3,12 +3,13 @@ class Datatable
   include Datatable::Searching
   delegate :params, to: 'self.view'
 
-  attr_accessor :name, :model, :view, :scopes
+  attr_accessor :name, :root, :model, :view, :scopes
 
-  # Called in has_datatable for model
-  def initialize(name, model)
+  # Called in has_datatable for model, or on an ActiveRecord::Relation in method_missing
+  def initialize(name, root)
     self.name = name
-    self.model = model
+    self.root = root
+    self.model = root.respond_to?(:klass) ? root.klass : root
   end
 
   # Render data attributes for table for view
@@ -27,10 +28,8 @@ class Datatable
   end
 
   # Pass in view and scope table for controller
-  def render_with(view, *args)
-    arguments = args.pop || {}
+  def render_with(view)
     self.view = view
-    self.scopes = Array(arguments.fetch(:scopes, []))
     return self
   end
 
@@ -54,15 +53,15 @@ class Datatable
   end
 
   class_attribute :columns, :column_factory
-  # Allow user defined columns, lazily instanciate later after 'self.model' is defined
+  # Allow user defined columns, lazily instanciate later after 'self.root' is defined
   def self.column(name, *args)
     arguments = args.pop || {}
     self.column_factory = [] if self.column_factory.nil?
-    self.column_factory << { name: name, args: arguments }
+    self.column_factory << { name: name.to_s, args: arguments }
   end
   # Lazily instanciates and caches columns
   def columns
-    @columns ||= self.column_factory.map{ |new_column| Column.new(self.model, new_column[:name], new_column[:args]) }
+    @columns ||= self.column_factory.map{ |new_column| Column.new(self, new_column[:name], new_column[:args]) }
   end
 
   class_attribute :joins
@@ -80,13 +79,10 @@ private
 
   # Compose query to fetch objects from database
   def objects
-    query = self.model.uniq
+    query = self.root.uniq
     self.joins.each do |join|
       query = query.joins{ join.split('.').inject((join.present? ? self : nil), :__send__).outer }
-      query = query.includes{ join.split('.').inject((join.present? ? self : nil), :__send__).outer }
-    end
-    self.scopes.each do |scope|
-      query = scope.call(query)
+      # query = query.includes{ join.split('.').inject((join.present? ? self : nil), :__send__).outer }
     end
     query = query.reorder{ my{sort} } if sortable
     query = query.where{ my{search(params[:sSearch])} } if searchable

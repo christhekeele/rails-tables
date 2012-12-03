@@ -17,8 +17,11 @@ module Datatable::Searching
     end
   end
 
-    attr_accessor :searches
+  # InstanceMethods
+  attr_accessor :searches
+
 private
+
   def searchable
     params[:sSearch].present?
   end
@@ -33,7 +36,7 @@ private
   # Build Squeel Stubs for search
   def search(terms)
     terms = terms.split if terms.is_a? String
-    searchables.map do |search|
+    @searches.map do |search|
       terms.map do |word|
         Squeel::Nodes::KeyPath.new(search[:column_source].split('.') << Squeel::Nodes::Stub.new(search[:method])) =~ "%#{word}%"
       end.compact.inject(&:|)

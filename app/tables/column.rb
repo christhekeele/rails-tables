@@ -1,10 +1,11 @@
 class Column
 
-  attr_accessor :model, :name, :method, :column_source, :render_with, :blank_value, :virtual, :sortable, :searchable
+  attr_accessor :table, :model, :name, :method, :column_source, :render_with, :blank_value, :virtual, :sortable, :searchable
 
-  def initialize(model, name, *args)
-    self.model = model
-    self.name = name.to_s
+  def initialize(table, name, *args)
+    self.table = table
+    self.model = self.table.model
+    self.name = name
 
     attributes = args.pop || {}
     self.method = attributes.fetch(:method, name).to_s
@@ -15,7 +16,12 @@ class Column
     self.sortable = attributes.fetch(:sortable, !self.virtual)
     self.searchable = attributes.fetch(:searchable, !self.virtual)
 
-    raise Exception, "Virtual columns are required to supply a render method (render_with: lambda): Column #{self.name}, Model: #{self.model.name}" if virtual and not attributes.has_key?(:render_with)
+    if virtual and not attributes.has_key?(:render_with)
+      raise Exception,
+        "Virtual columns are required to supply a render method (render_with: lambda): "\
+        "Column: #{self.name}, Datatable: #{self.table.name}, Model: #{self.model.name}"
+    end
+
     self.render_with = attributes.fetch(:render_with, :default_render)
     self.blank_value = attributes.fetch(:blank_value, '&ndash;')
 
