@@ -36,7 +36,7 @@ private
   # Build Squeel Stubs for search
   def search(terms)
     terms = terms.split if terms.is_a? String
-    @searches.map do |search|
+    searchables.map do |search|
       terms.map do |word|
         Squeel::Nodes::KeyPath.new(search[:column_source].split('.') << Squeel::Nodes::Stub.new(search[:method])) =~ "%#{word}%"
       end.compact.inject(&:|)
