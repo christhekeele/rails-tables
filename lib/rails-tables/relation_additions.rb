@@ -3,7 +3,11 @@ module RailsTables::RelationAdditions
   delegate :has_datatable?, to: :klass
 
   def respond_to?(method, include_private = false)
-    self.has_datatable? method
+    if self.has_datatable? method.to_s
+      true
+    else
+      super
+    end
   end
 
 protected

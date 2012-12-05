@@ -82,7 +82,7 @@ private
     query = self.root.uniq
     self.joins.each do |join|
       query = query.joins{ join.split('.').inject((join.present? ? self : nil), :__send__).outer }
-      # query = query.includes{ join.split('.').inject((join.present? ? self : nil), :__send__).outer }
+      query = query.includes{ join.split('.').inject((join.present? ? self : nil), :__send__).outer }
     end
     query = query.reorder{ my{sort} } if sortable
     query = query.where{ my{search(params[:sSearch])} } if searchable
