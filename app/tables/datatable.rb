@@ -3,13 +3,17 @@ class Datatable
   include Datatable::Searching
   delegate :params, to: 'self.view'
 
-  attr_accessor :name, :root, :model, :view, :scopes
+  attr_accessor :name, :root, :model, :view
 
   # Called in has_datatable for model, or on an ActiveRecord::Relation in method_missing
-  def initialize(name, root)
+  def initialize(name, model)
     self.name = name
+    self.root = self.model = model
+  end
+
+  def set_root(root)
     self.root = root
-    self.model = root.respond_to?(:klass) ? root.klass : root
+    self
   end
 
   # Render data attributes for table for view
@@ -61,7 +65,7 @@ class Datatable
   end
   # Lazily instanciates and caches columns
   def columns
-    @columns ||= self.column_factory.map{ |new_column| Column.new(self, new_column[:name], new_column[:args]) }
+    @columns ||= self.column_factory.map{ |new_column| Column.new(self.class.name, self.model, new_column[:name], new_column[:args]) }
   end
 
   class_attribute :joins

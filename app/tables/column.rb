@@ -1,10 +1,10 @@
 class Column
 
-  attr_accessor :table, :model, :name, :method, :column_source, :render_with, :blank_value, :virtual, :sortable, :searchable
+  attr_accessor :table_name, :model, :name, :method, :column_source, :render_with, :blank_value, :virtual, :sortable, :searchable
 
-  def initialize(table, name, *args)
-    self.table = table
-    self.model = self.table.model
+  def initialize(table_name, model, name, *args)
+    self.table_name = table_name
+    self.model = model
     self.name = name
 
     attributes = args.pop || {}
@@ -19,7 +19,7 @@ class Column
     if virtual and not attributes.has_key?(:render_with)
       raise Exception,
         "Virtual columns are required to supply a render method (render_with: lambda): "\
-        "Column: #{self.name}, Datatable: #{self.table.name}, Model: #{self.model.name}"
+        "Column: #{self.name}, Datatable: #{self.table_name}, Model: #{self.model.name}"
     end
 
     self.render_with = attributes.fetch(:render_with, :default_render)
@@ -60,10 +60,6 @@ private
   def related_link_list(view, objects)
     objects.reject(&:blank?).map{ |object| related_link(view, object).strip }.join(', ') if not objects.nil?
   end
-  # def unique_related_link_list(view, objects, field)
-  #   binding.pry if objects.length > 1
-  #   related_link_list(view, objects.uniq{|o| o.send(field)} )
-  # end
   def time(view, object)
     property = object.try(:send, self.method)
     property.strftime("%I:%M%p") if not property.nil?

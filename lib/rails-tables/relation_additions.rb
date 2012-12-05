@@ -14,7 +14,7 @@ protected
 
   def method_missing(method, *args, &block)
     if self.has_datatable? method.to_s
-      self.klass.datatables[method.to_s].new(method.to_s, self)
+      self.klass.send(method.to_s).set_root(self)
     else
       super
     end
