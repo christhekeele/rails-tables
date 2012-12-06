@@ -1,4 +1,4 @@
-module RailsTables::Datatables::Searching
+module RailsTables::Searching
   extend ActiveSupport::Concern
 
   included do

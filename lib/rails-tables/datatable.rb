@@ -1,9 +1,9 @@
-require "column"
-# require "datatables/sorting"
-# require "datatables/searching"
+require "rails-tables/datatable/column"
+require "rails-tables/datatable/sorting"
+require "rails-tables/datatable/searching"
 class RailsTables::Datatable
-  # include Sorting
-  # include Searching
+  include RailsTables::Sorting
+  include RailsTables::Searching
   delegate :params, to: 'self.view'
 
   attr_accessor :name, :root, :model, :view
@@ -68,7 +68,7 @@ class RailsTables::Datatable
   end
   # Lazily instanciates and caches columns
   def columns
-    # @columns ||= self.column_factory.map{ |new_column| Column.new(self.class.name, self.model, new_column[:name], new_column[:args]) }
+    @columns ||= self.column_factory.map{ |new_column| RailsTables::Column.new(self.class.name, self.model, new_column[:name], new_column[:args]) }
   end
 
   class_attribute :joins

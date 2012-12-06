@@ -1,4 +1,4 @@
-module RailsTables::Datatables::Sorting
+module RailsTables::Sorting
   extend ActiveSupport::Concern
 
   included do
