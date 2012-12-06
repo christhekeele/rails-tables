@@ -1,4 +1,4 @@
-class Column
+class RailsTables::Column
 
   attr_accessor :table_name, :model, :name, :method, :column_source, :render_with, :blank_value, :virtual, :sortable, :searchable
 
