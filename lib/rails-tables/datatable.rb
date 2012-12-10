@@ -53,10 +53,10 @@ class RailsTables::Datatable
   class_attribute :source, :source_factory
   # Set source url for this table
   def self.source_path=(source)
-    self.source_factory = source
+    self.source_factory = source if source.present?
   end
   def self.source
-    @source ||= Rails.application.routes.url_helpers.send(self.source_factory, format: "json")
+    @source ||= Rails.application.routes.url_helpers.send(self.source_factory, format: "json") if self.source_factory.present?
   end
 
   class_attribute :columns, :column_factory
