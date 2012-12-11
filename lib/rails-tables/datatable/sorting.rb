@@ -2,19 +2,15 @@ module RailsTables::Sorting
   extend ActiveSupport::Concern
 
   included do
-    class_attribute :initial_ordering
+    class_attribute :initial_order
     extend ClassMethods
   end
 
   module ClassMethods
     # Gotta set these to fight against datatables' default ordering on first column
-    # def initial_ordering(orderings)
-    #   self.set_initial_orderings orderings
-    # end
-    # def set_initial_orderings(orderings)
-    #   self.initial_orderings = {} if self.initial_orderings.nil?
-    #   self.initial_orderings.merge! orderings
-    # end
+    def initial_ordering(orderings)
+      self.initial_order = orderings
+    end
 
   end
 
@@ -30,10 +26,9 @@ private
   end
   # Find column to search by and create a Squeel Order
   def sort
-    binding.pry
-    if params[:bUseDefaultSort] == 'true'
-      column = self.columns.select{|c|c.name == self.initial_ordering.keys.first.to_s}.first
-      directions = self.initial_ordering.values.first.to_s == "asc" ? 1 : -1
+    if params[:bUseDefaultSort] == 'true' and self.initial_order.present?
+      column = self.columns.select{|c|c.name == self.initial_order.keys.first.to_s}.first
+      direction = self.initial_order.values.first.to_s == "asc" ? 1 : -1
     else
       column = self.columns[params[:iSortCol_0].to_i]
       direction = params[:sSortDir_0] == "asc" ? 1 : -1

@@ -25,11 +25,6 @@ class RailsTables::Datatable
     if self.class.source?
       options[:source] = self.class.source
     end
-    unless self.initial_orderings.nil?
-      self.class.initial_orderings.each do |column, order|
-        options["#{column}_ordering".to_sym] = order.to_s
-      end
-    end
     options[:unsorted] = 'true'
     options
   end
