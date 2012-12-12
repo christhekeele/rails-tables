@@ -1,11 +1,12 @@
 class RailsTables::Column
 
-  attr_accessor :table_name, :model, :name, :method, :column_source, :render_with, :blank_value, :virtual, :sortable, :searchable
+  attr_accessor :table_name, :model, :name, :order, :method, :column_source, :render_with, :blank_value, :virtual, :sortable, :searchable
 
-  def initialize(table_name, model, name, *args)
+  def initialize(table_name, model, name, order, *args)
     self.table_name = table_name
     self.model = model
     self.name = name
+    self.order = order
 
     attributes = args.pop || {}
     self.method = attributes.fetch(:method, name).to_s

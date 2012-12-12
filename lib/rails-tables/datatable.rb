@@ -25,10 +25,9 @@ class RailsTables::Datatable
     if self.class.source?
       options[:source] = self.class.source
     end
-    unless self.initial_orderings.nil?
-      self.class.initial_orderings.each do |column, order|
-        options["#{column}_ordering".to_sym] = order.to_s
-      end
+    if self.initial_order.present?
+      options[:order_column] = self.columns.select{|c|c.name==self.class.initial_order.first[0].to_s}.first.order
+      options[:order_direction] = self.class.initial_order.first[1]
     end
     options[:unsorted] = 'true'
     options
@@ -68,7 +67,7 @@ class RailsTables::Datatable
   end
   # Lazily instanciates and caches columns
   def columns
-    @columns ||= self.column_factory.map{ |new_column| RailsTables::Column.new(self.class.name, self.model, new_column[:name], new_column[:args]) }
+    @columns ||= self.column_factory.map.with_index{ |new_column, index| RailsTables::Column.new(self.class.name, self.model, new_column[:name], index, new_column[:args]) }
   end
 
   class_attribute :joins

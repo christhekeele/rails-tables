@@ -6,8 +6,8 @@ $ ->
 
 @rails_tables = {}
 @rails_tables.columns = (datatable)->
-  for column, order of $(datatable).data() when /_ordering/.test(column)
-    {asSorting: [ order ], aTargets: [ column.substring(0, column.length - "_ordering".length) ]}
+  console.log $(datatable).data().order_column, $(datatable).data().order_direction
+  asSorting: [ $(datatable).data().order_direction ], aTargets: [ $(datatable).data().order_column ]
 @rails_tables.params = (datatable) ->
   (aoData) ->
     aoData.push
