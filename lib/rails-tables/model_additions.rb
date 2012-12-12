@@ -24,11 +24,11 @@ module RailsTables::ModelAdditions
       cattr_accessor :datatables unless self.respond_to? :datatables
       self.datatables ||= {}
 
-      if self.has_datatable? name
-        raise RailsTables::NameError,
-          "#{self.name} already has a datatable with the name '#{name}'. "\
-          "Please supply a :name parameter to has_datatable other than: #{self.datatables.keys.join(', ')}"
-      else
+      # if self.has_datatable? name
+      #   raise RailsTables::NameError,
+      #     "#{self.name} already has a datatable with the name '#{name}'. "\
+      #     "Please supply a :name parameter to has_datatable other than: #{self.datatables.keys.join(', ')}"
+      # else
         self.datatables[name] = klass
         cattr_writer name
         self.send("#{name}=", klass.new(name, self))
@@ -37,7 +37,7 @@ module RailsTables::ModelAdditions
             self.class_variable_get("@@#{name}").set_root(self)
           end
         end
-      end
+      # end
     end
 
     def has_datatable?(table_name=:datatable)

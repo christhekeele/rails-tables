@@ -50,6 +50,7 @@ private
     property = object.try(:send, self.method)
     property if not property.nil?
   end
+
   def self_referential_link(view, object)
     property = object.try(:send, self.method)
     view.link_to property, object if not property.nil?
@@ -61,6 +62,7 @@ private
   def related_link_list(view, objects)
     objects.reject(&:blank?).map{ |object| related_link(view, object).strip }.join(', ') if not objects.nil?
   end
+
   def time(view, object)
     property = object.try(:send, self.method)
     property.strftime("%I:%M%p") if not property.nil?
@@ -72,6 +74,20 @@ private
   def datetime(view, object)
     property = object.try(:send, self.method)
     property.strftime("%m/%d/%Y at %I:%M%p") if not property.nil?
+  end
+
+  def currency(view, object)
+    property = object.try(:send, self.method)
+    view.number_to_currency(property.to_f) if not property.nil?
+  end
+  def phone(view, object)
+    property = object.try(:send, self.method)
+    view.number_to_phone(property.to_f) if not property.nil?
+  end
+
+  def truncate(view, object)
+    property = object.try(:send, self.method)
+    view.truncate(property, 50) if not property.nil?
   end
 
 end
