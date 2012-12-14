@@ -60,14 +60,18 @@ class RailsTables::Datatable
 
   class_attribute :columns, :column_factory
   # Allow user defined columns, lazily instanciate later after 'self.root' is defined
-  def self.column(name, *args)
-    arguments = args.pop || {}
+  def self.column(name, options={}, &block)
     self.column_factory = [] if self.column_factory.nil?
-    self.column_factory << { name: name.to_s, args: arguments }
+    self.column_factory << { name: name.to_s, options: options, block: block }
   end
   # Lazily instanciates and caches columns
   def columns
-    @columns ||= self.column_factory.map.with_index{ |new_column, index| RailsTables::Column.new(self.class.name, self.model, new_column[:name], index, new_column[:args]) }
+    @columns ||= self.column_factory.map.with_index do |new_column, index|
+      new_column[:index] = index
+      new_column[:table] = self
+      new_column[:model] = self.model
+      RailsTables::ColumnBuilder.define(new_column)
+    end
   end
 
   class_attribute :joins
