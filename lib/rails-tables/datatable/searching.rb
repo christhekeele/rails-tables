@@ -10,9 +10,9 @@ module RailsTables::Searching
   module ClassMethods
     # Allow user defined fields to sort on in addition to introspected fields
     def search_on(column_source, methods)
-      Array(methods).each do |method|
+      Array(methods).each do |column_name|
         join column_source
-        self.searches += [{column_source: column_source.to_s, method: method.to_s}]
+        self.searches += [{column_source: column_source.to_s, column_name: column_name.to_s}]
       end
     end
   end
@@ -29,7 +29,7 @@ private
   def searchables
     searches = self.columns.
       select(&:searchable).
-      map{ |c| {column_source: c.column_source, method: c.method} }
+      map{ |c| {column_source: c.column_source, column_name: c.column_name} }
     searches += self.class.searches
     @searches ||= searches.uniq
   end
@@ -38,7 +38,7 @@ private
     terms = terms.split if terms.is_a? String
     searchables.map do |search|
       terms.map do |word|
-        Squeel::Nodes::KeyPath.new(search[:column_source].split('.') << Squeel::Nodes::Stub.new(search[:method])) =~ "%#{word}%"
+        Squeel::Nodes::KeyPath.new(search[:column_source].split('.') << Squeel::Nodes::Stub.new(search[:column_name])) =~ "%#{word}%"
       end.compact.inject(&:|)
     end.compact.inject(&:|)
   end

@@ -62,7 +62,7 @@ class RailsTables::Datatable
   # Allow user defined columns, lazily instanciate later after 'self.root' is defined
   def self.column(name, options={}, &block)
     self.column_factory = [] if self.column_factory.nil?
-    self.column_factory << { name: name.to_s, options: options, block: block }
+    self.column_factory << { name: name.to_s, block: block }.merge(options)
   end
   # Lazily instanciates and caches columns
   def columns
@@ -82,7 +82,7 @@ class RailsTables::Datatable
   end
   # Deduce joins based on columns and explicitly joined tables 
   def joins
-    @joins ||= (self.columns.reject(&:virtual).map(&:column_source).reject(&:blank?) + self.class.joins).uniq 
+    @joins ||= (self.columns.reject(&:virtual).map(&:column_source).reject(&:blank?).map(&:to_s) + self.class.joins).uniq 
   end
 
 private
@@ -110,7 +110,7 @@ private
   # Generate HTML for each row
   def data
     objects.map do |object|
-      self.columns.map{ |column| column.render(self.view, object) }
+      self.columns.map{ |column| column.render(object) }
     end
   end
 
