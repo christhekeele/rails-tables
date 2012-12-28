@@ -6,7 +6,7 @@ class RailsTables::Datatable
   include RailsTables::Searching
   delegate :params, to: 'self.view'
 
-  attr_accessor :name, :root, :model, :view
+  attr_accessor :name, :root, :model, :view, :locals
 
   # Called in has_datatable for model, or on an ActiveRecord::Relation in method_missing
   def initialize(name, model)
@@ -26,7 +26,7 @@ class RailsTables::Datatable
       options[:source] = self.class.source
     end
     if self.initial_order.present?
-      options[:order_column] = self.columns.select{|c|c.name==self.class.initial_order.first[0].to_s}.first.order
+      options[:order_column] = self.columns.select{|c|c.name==self.class.initial_order.first[0].to_s}.first.index
       options[:order_direction] = self.class.initial_order.first[1]
     end
     options[:unsorted] = 'true'
@@ -34,8 +34,9 @@ class RailsTables::Datatable
   end
 
   # Pass in view and scope table for controller
-  def render_with(view)
+  def render_with(view, locals)
     self.view = view
+    self.locals = locals
     return self
   end
 
@@ -80,9 +81,9 @@ class RailsTables::Datatable
   def self.join(join)
     self.joins += [join.to_s]
   end
-  # Deduce joins based on columns and explicitly joined tables 
+  # Deduce joins based on columns and explicitly joined tables
   def joins
-    @joins ||= (self.columns.reject(&:virtual).map(&:column_source).reject(&:blank?).map(&:to_s) + self.class.joins).uniq 
+    @joins ||= (self.columns.reject(&:virtual).map(&:column_source).reject(&:blank?).map(&:to_s) + self.class.joins).uniq
   end
 
 private
