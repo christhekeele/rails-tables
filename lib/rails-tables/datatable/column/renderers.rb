@@ -5,7 +5,7 @@ module RailsTables
       link_to property, object if not property.nil?
     end
     def link_to_objects(objects)
-      objects.reject(&:blank?).map{ |object| related_link(object).strip }.join(', ') if not objects.nil?
+      objects.reject(&:blank?).map{ |object| link_to_object(object).strip }.join(', ') if not objects.nil?
     end
 
     def time(object)
