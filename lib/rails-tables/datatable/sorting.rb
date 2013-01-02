@@ -34,7 +34,7 @@ private
       direction = params[:sSortDir_0] == "asc" ? 1 : -1
     end
     if column.sortable
-      Squeel::Nodes::KeyPath.new(column.column_source.split('.') << Squeel::Nodes::Order.new(Squeel::Nodes::Stub.new(column.column_name), direction))
+      Squeel::Nodes::KeyPath.new(column.column_source.to_s.split('.') << Squeel::Nodes::Order.new(Squeel::Nodes::Stub.new(column.method_name.to_s), direction))
     end
   end
 

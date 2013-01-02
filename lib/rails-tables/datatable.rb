@@ -34,7 +34,7 @@ class RailsTables::Datatable
   end
 
   # Pass in view and scope table for controller
-  def render_with(view, locals)
+  def render_with(view, locals={})
     self.view = view
     self.locals = locals
     return self

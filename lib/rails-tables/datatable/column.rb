@@ -1,7 +1,7 @@
 require "rails-tables/datatable/column/renderers"
 module RailsTables
   mattr_accessor :column_attributes
-  self.column_attributes = [:name, :index, :table, :model, :column_name, :column_source, :follow_source, :renderer, :blank_value, :virtual, :sortable, :searchable]
+  self.column_attributes = [:name, :index, :table, :model, :method_name, :column_source, :follow_source, :renderer, :blank_value, :virtual, :sortable, :searchable]
 
   class ColumnBuilder
     attr_reader :column
@@ -33,7 +33,7 @@ module RailsTables
     # Set some defaults
     def initialize(*args)
       super
-      self[:column_name]    = name.to_s                      if column_name.nil?
+      self[:method_name]    = name.to_s                      if method_name.nil?
       self[:column_source]  = ''                             if column_source.nil?
       self[:renderer]       = :default_renderer              if renderer.nil?
       self[:follow_source]  = !self[:renderer].is_a?(Proc)   if follow_source.nil?
@@ -45,7 +45,7 @@ module RailsTables
       define_singleton_method :render do |object|
         render_method = renderer.is_a?(Proc) ? renderer : method(renderer)
         object = follow_source_on(object) if follow_source
-        content = self.table.view.instance_exec(object, &render_method)
+        content = self.instance_exec object, &render_method
         content.present? ? content.to_s.html_safe : blank_value
       end
     end
@@ -61,11 +61,13 @@ module RailsTables
     end
 
     def default_renderer(object)
-      object.send(column_name) if object.respond_to? column_name
+      object.send(method_name) if object.respond_to? method_name
     end
 
     def respond_to?(sym)
-      if table.locals.has_key? sym
+      if table.view.respond_to? sym
+        true
+      elsif table.locals.has_key? sym
         true
       else
         super
@@ -73,7 +75,9 @@ module RailsTables
     end
 
     def method_missing(sym, *args)
-      if table.locals.has_key? sym
+      if table.view.respond_to? sym
+        table.view.send(sym, *args)
+      elsif table.locals.has_key? sym
         table.locals[sym]
       else
         super
